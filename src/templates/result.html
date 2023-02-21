@@ -1,0 +1,31 @@
+<title>Object Detection App</title>
+{% if detectionName %}
+<h1>{{ detectionName }} などが検出できました</h1>
+<div>
+  <img src="{{ image }}" />
+</div>
+<h2>検出できたもの</h2>
+<div>{{ table|safe }}</div>
+<div>
+  <h2>
+    <label>物体を限定して再検出</label>
+  </h2>
+  <p>
+    <form method = post action="/exclusive">
+      <label for="names"></label>
+        <select name="names" id="names">
+          {% for name in names %}          
+            <option value="{{ name }}">{{ name }}</option>
+          {% endfor %}</select
+        >のみを限定して
+        <button>再検出</button>
+    </form>
+  </p>
+</div>
+<p>
+  <a href="./">トップへ戻る</a>
+</p>
+{% else %}
+<a href="./">トップへ戻る</a>
+{% endif %}
+
