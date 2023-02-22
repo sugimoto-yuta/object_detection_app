@@ -17,7 +17,7 @@ def predict(img):
 
     # 学習済みモデルを用意
     # model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
-    model = torch.load('odfaster.pt')
+    model = torch.load('./odfaster.pt')
 
     # 推論モードへ
     model.eval()
