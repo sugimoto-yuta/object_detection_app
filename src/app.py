@@ -9,6 +9,7 @@ from flask import Flask, request, render_template, redirect
 import io
 import base64
 import pandas as pd
+import torch
 
 
 # 学習済みモデルを元に推論する
@@ -17,8 +18,8 @@ def predict(img):
     x = transform(img)
 
     # 学習済みモデルを用意
-    pl.seed_everything(0)
-    model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
+    # model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
+    model = torch.load('odfaster.pt')
 
     # 推論モードへ
     model.eval()
