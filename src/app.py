@@ -1,7 +1,5 @@
-import pytorch_lightning as pl
 from torchvision import transforms
 from PIL import Image
-from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn
 import numpy as np
 from PIL import ImageDraw, ImageFont
 import collections
