@@ -1,13 +1,24 @@
+import torch
+import pytorch_lightning as pl
 from torchvision import transforms
-from PIL import Image
+from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
-from PIL import ImageDraw, ImageFont
+import pandas as pd
 import collections
 from flask import Flask, request, render_template, redirect
 import io
 import base64
-import pandas as pd
-import torch
+
+class Net(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+
+        self.feature = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True) 
+
+    def forward(self, x):
+        y = self.feature(x)
+        return y
 
 
 # 学習済みモデルを元に推論する
@@ -15,15 +26,13 @@ def predict(img):
     transform = transforms.ToTensor()
     x = transform(img)
 
-    # 学習済みモデルを用意
+    # モデルを用意
     # model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
-    model = torch.load('./odfaster.pt')
-
-    # 推論モードへ
-    model.eval()
+    net = Net().cpu().eval()
+    net.load_state_dict(torch.load('./odfastercnn_mv3lf.pt', map_location=torch.device('cpu')))
 
     # 推論
-    y = model(x.unsqueeze(0))[0]
+    y = net(x.unsqueeze(0))[0]
     return x, y
 
 # クラスラベルのリストを用意
