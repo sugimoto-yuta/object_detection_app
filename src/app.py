@@ -1,24 +1,13 @@
-import torch
 import pytorch_lightning as pl
 from torchvision import transforms
-from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn
 from PIL import Image, ImageDraw, ImageFont
+from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_fpn
 import numpy as np
-import pandas as pd
 import collections
 from flask import Flask, request, render_template, redirect
 import io
 import base64
-
-class Net(pl.LightningModule):
-    def __init__(self):
-        super().__init__()
-
-        self.feature = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True) 
-
-    def forward(self, x):
-        y = self.feature(x)
-        return y
+import pandas as pd
 
 
 # 学習済みモデルを元に推論する
@@ -26,13 +15,15 @@ def predict(img):
     transform = transforms.ToTensor()
     x = transform(img)
 
-    # モデルを用意
-    # model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
-    net = Net().cpu().eval()
-    net.load_state_dict(torch.load('./odfastercnn_mv3lf.pt', map_location=torch.device('cpu')))
+    # 学習済みモデルを用意
+    pl.seed_everything(0)
+    model = fasterrcnn_mobilenet_v3_large_fpn(pretrained=True)
+
+    # 推論モードへ
+    model.eval()
 
     # 推論
-    y = net(x.unsqueeze(0))[0]
+    y = model(x.unsqueeze(0))[0]
     return x, y
 
 # クラスラベルのリストを用意
@@ -160,12 +151,7 @@ def predicts():
         # ファイルのチェック
         if file and allowed_file(file.filename):
             
-            # 画像ファイルに対する処理
-            # 画像書き込み用バッファを確保
-            buf = io.BytesIO()
             image = Image.open(file).convert('RGB')
-            # 画像データをバッファに読み込む
-            image.save(buf, 'png')
 
             # 変数をグローバル化
             global x, y, label_list, texts
@@ -185,16 +171,13 @@ def predicts():
             # 検出したもののリストの先頭名を取得
             detectionName_ = texts[0]
 
-            # 元画像データをいったん削除
-            del buf
-
             # 画像書き込み用バッファを確保
-            buf2 = io.BytesIO()
+            buf = io.BytesIO()
             # 画像データをバッファに読み込む
-            od_image.save(buf2, 'png')
+            od_image.save(buf, 'png')
 
             # バイナリーデータをbase64でエンコードしてutf-8でデコード
-            base64_str = base64.b64encode(buf2.getvalue()).decode('utf-8')
+            base64_str = base64.b64encode(buf.getvalue()).decode('utf-8')
             # HTML側のの記述に合わせるために付帯情報を付与
             base64_data = f'data:image/png;base64,{base64_str}'
             return render_template('result.html', detectionName=detectionName_, table=df.to_html(header='true'), image=base64_data, names=texts)
@@ -210,3 +193,17 @@ if __name__ == '__main__':
 
 
 
+
+
+# # figをbase64形式に変換
+# def fig_to_base64_img(fig):
+#     """画像を base64 に変換する。
+#     """
+#     # png 形式で出力する。
+#     buf = io.BytesIO()
+#     fig.savefig(buf, format="png")
+#     # base64 形式に変換する。
+#     buf.seek(0)
+#     base64_img = base64.b64encode(buf.read()).decode()
+
+#     return base64_img
