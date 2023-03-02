@@ -2,7 +2,7 @@
 {% if name %}
 <h1>{{ name }} に限定して検出した結果</h1>
 <div>
-  <img src="{{ image }}" />
+  <img src="data:image/png;base64,{{ image }}" />
 </div>
 <p>
   <a href="./">トップへ戻る</a>

@@ -9,6 +9,7 @@ import io
 import base64
 import pandas as pd
 
+app = Flask(__name__)
 
 # 学習済みモデルを元に推論する
 def predict(img):
@@ -96,7 +97,6 @@ def exclusive_visualize_results(input, output, threshold, applicable_label):
             if label == applicable_label:
                 applicable_boxes.append(box)
 
-
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype('./NotoSansCJKjp-Bold.otf', 16)
     for box in applicable_boxes:
@@ -110,7 +110,19 @@ def exclusive_visualize_results(input, output, threshold, applicable_label):
 
     return image
 
-app = Flask(__name__)
+# imgをbase64形式に変換
+def img_to_base64_img(img):
+    """画像を base64 に変換する。
+    """
+    # png 形式で出力する。
+    buf = io.BytesIO()
+    img.save(buf, format="png")
+    # base64 形式に変換する。
+    buf.seek(0)
+    base64_img = base64.b64encode(buf.read()).decode()
+
+    return base64_img
+
 
 # アップロードされる拡張子の制限
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'gif', 'jpeg'])
@@ -128,12 +140,7 @@ def exclusive_predicts():
         label_index = COCO_INSTANCE_CATEGORY_NAMES.index(labelname)
         exclusive_image = exclusive_visualize_results(x, y, 0.5, label_index)
 
-        buf = io.BytesIO()
-        exclusive_image.save(buf, 'png')
-        # バイナリーデータをbase64でエンコードしてutf-8でデコード
-        base64_str = base64.b64encode(buf.getvalue()).decode('utf-8')
-        # HTML側のの記述に合わせるために付帯情報を付与
-        base64_data = f'data:image/png;base64,{base64_str}'
+        base64_data = img_to_base64_img(exclusive_image)
 
         # 変数展開(messageとnameの値がHTMLに渡される)
         return render_template('exclusive.html', image=base64_data, name=labelname)
@@ -151,10 +158,10 @@ def predicts():
         # ファイルのチェック
         if file and allowed_file(file.filename):
             
-            image = Image.open(file).convert('RGB')
-
             # 変数をグローバル化
             global x, y, label_list, texts
+
+            image = Image.open(file).convert('RGB')
 
             # 入力された画像に対して推論
             x, y = predict(image)
@@ -171,15 +178,8 @@ def predicts():
             # 検出したもののリストの先頭名を取得
             detectionName_ = texts[0]
 
-            # 画像書き込み用バッファを確保
-            buf = io.BytesIO()
-            # 画像データをバッファに読み込む
-            od_image.save(buf, 'png')
+            base64_data = img_to_base64_img(od_image)
 
-            # バイナリーデータをbase64でエンコードしてutf-8でデコード
-            base64_str = base64.b64encode(buf.getvalue()).decode('utf-8')
-            # HTML側のの記述に合わせるために付帯情報を付与
-            base64_data = f'data:image/png;base64,{base64_str}'
             return render_template('result.html', detectionName=detectionName_, table=df.to_html(header='true'), image=base64_data, names=texts)
 
         return redirect(request.url)
@@ -195,15 +195,3 @@ if __name__ == '__main__':
 
 
 
-# # figをbase64形式に変換
-# def fig_to_base64_img(fig):
-#     """画像を base64 に変換する。
-#     """
-#     # png 形式で出力する。
-#     buf = io.BytesIO()
-#     fig.savefig(buf, format="png")
-#     # base64 形式に変換する。
-#     buf.seek(0)
-#     base64_img = base64.b64encode(buf.read()).decode()
-
-#     return base64_img

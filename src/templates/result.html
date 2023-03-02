@@ -1,7 +1,7 @@
 {% if detectionName %}
 <h1>{{ detectionName }} などが検出できました</h1>
 <div>
-  <img src="{{ image }}" />
+  <img src="data:image/png;base64,{{ image }}" />
 </div>
 <h2>検出できたもの</h2>
 <div>{{ table|safe }}</div>
